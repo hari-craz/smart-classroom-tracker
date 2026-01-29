@@ -45,7 +45,9 @@ services:
 
   # Admin Frontend
   admin-frontend:
-    image: node:18-alpine
+    build:
+      context: ./frontend-admin
+      dockerfile: Dockerfile
     container_name: classroom_admin_ui
     working_dir: /app
     environment:
@@ -55,14 +57,15 @@ services:
       - /app/node_modules
     ports:
       - "8090:3000"
-    command: sh -c "npm install && npm start"
     networks:
       - classroom_network
     restart: unless-stopped
 
   # Staff Frontend
   staff-frontend:
-    image: node:18-alpine
+    build:
+      context: ./frontend-staff
+      dockerfile: Dockerfile
     container_name: classroom_staff_ui
     working_dir: /app
     environment:
@@ -72,7 +75,6 @@ services:
       - /app/node_modules
     ports:
       - "8091:3000"
-    command: sh -c "npm install && npm start"
     networks:
       - classroom_network
     restart: unless-stopped
