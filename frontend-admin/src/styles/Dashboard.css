@@ -1,0 +1,109 @@
+.dashboard h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+.stat-card h3 {
+  font-size: 2.5rem;
+  color: #667eea;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card p {
+  color: #666;
+  font-weight: 500;
+}
+
+.stat-card.occupied h3 {
+  color: #ff6b6b;
+}
+
+.stat-card.powered h3 {
+  color: #38ada9;
+}
+
+.stat-card.devices h3 {
+  color: #764ba2;
+}
+
+.classrooms-overview {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.classrooms-overview h3 {
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.3rem;
+}
+
+.status-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.status-table thead {
+  background-color: #f8f8f8;
+  border-bottom: 2px solid #667eea;
+}
+
+.status-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+}
+
+.status-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.status-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .classrooms-overview {
+    overflow-x: auto;
+  }
+
+  .status-table {
+    font-size: 0.85rem;
+  }
+
+  .status-table th,
+  .status-table td {
+    padding: 0.75rem;
+  }
+}

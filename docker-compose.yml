@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: classroom_db
+    environment:
+      POSTGRES_USER: classroom
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-your_db_password}
+      POSTGRES_DB: classroom_tracker
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U classroom"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - classroom_network
+
+  # Backend API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: classroom_api
+    environment:
+      DATABASE_URL: postgresql://classroom:${DB_PASSWORD:-your_db_password}@db:5432/classroom_tracker
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-your_secure_jwt_secret}
+      FLASK_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8089:5000"
+    volumes:
+      - ./backend:/app
+    networks:
+      - classroom_network
+    restart: unless-stopped
+
+  # Admin Frontend
+  admin-frontend:
+    image: node:18-alpine
+    container_name: classroom_admin_ui
+    working_dir: /app
+    environment:
+      REACT_APP_API_URL: ${ADMIN_API_URL:-http://localhost:8089}
+    volumes:
+      - ./frontend-admin:/app
+      - /app/node_modules
+    ports:
+      - "8090:3000"
+    command: sh -c "npm install && npm start"
+    networks:
+      - classroom_network
+    restart: unless-stopped
+
+  # Staff Frontend
+  staff-frontend:
+    image: node:18-alpine
+    container_name: classroom_staff_ui
+    working_dir: /app
+    environment:
+      REACT_APP_API_URL: ${STAFF_API_URL:-http://localhost:8089}
+    volumes:
+      - ./frontend-staff:/app
+      - /app/node_modules
+    ports:
+      - "8091:3000"
+    command: sh -c "npm install && npm start"
+    networks:
+      - classroom_network
+    restart: unless-stopped
+
+
+
+volumes:
+  postgres_data:
+
+networks:
+  classroom_network:
+    driver: bridge
