@@ -1,7 +1,7 @@
 version: '3.8'
 
 # Production Docker Compose for Portainer/TrueNAS
-# Uses pre-built images - no building required in Portainer
+# Uses local pre-built images - no building required
 
 services:
   # PostgreSQL Database
@@ -25,9 +25,9 @@ services:
       - classroom_network
     restart: unless-stopped
 
-  # Backend API Server (Pre-built image)
+  # Backend API Server (Pre-built local image)
   backend:
-    image: haricraz/smart-classroom-api:latest
+    image: smartclassroomutilizationtrackerwithpowermanagement-backend:latest
     container_name: classroom_api
     environment:
       DATABASE_URL: postgresql://classroom:${DB_PASSWORD:-classroom_secure_password}@db:5432/classroom_tracker
@@ -42,9 +42,9 @@ services:
       - classroom_network
     restart: unless-stopped
 
-  # Admin Frontend (Pre-built image)
+  # Admin Frontend (Pre-built local image)
   admin-frontend:
-    image: haricraz/smart-classroom-admin:latest
+    image: smartclassroomutilizationtrackerwithpowermanagement-admin-frontend:latest
     container_name: classroom_admin_ui
     environment:
       REACT_APP_API_URL: ${ADMIN_API_URL:-http://localhost:8089}
@@ -54,9 +54,9 @@ services:
       - classroom_network
     restart: unless-stopped
 
-  # Staff Frontend (Pre-built image)
+  # Staff Frontend (Pre-built local image)
   staff-frontend:
-    image: haricraz/smart-classroom-staff:latest
+    image: smartclassroomutilizationtrackerwithpowermanagement-staff-frontend:latest
     container_name: classroom_staff_ui
     environment:
       REACT_APP_API_URL: ${STAFF_API_URL:-http://localhost:8089}
