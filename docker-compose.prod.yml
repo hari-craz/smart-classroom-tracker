@@ -6,9 +6,7 @@ version: '3.8'
 services:
   # PostgreSQL Database
   db:
-    build:
-      context: ./database
-      dockerfile: Dockerfile
+    image: postgres:15-alpine
     container_name: classroom_db
     environment:
       POSTGRES_USER: classroom
@@ -16,8 +14,10 @@ services:
       POSTGRES_DB: classroom_tracker
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/init-users.sql:/docker-entrypoint-initdb.d/02-init-users.sql
+    expose:
+      - "5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U classroom"]
       interval: 10s
@@ -40,8 +40,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    expose:
-      - "5000"
     ports:
       - "8089:5000"
     networks:
@@ -56,8 +54,6 @@ services:
       args:
         REACT_APP_API_URL: ${ADMIN_API_URL:-http://localhost:8089}
     container_name: classroom_admin_ui
-    expose:
-      - "80"
     ports:
       - "8090:80"
     networks:
@@ -72,8 +68,6 @@ services:
       args:
         REACT_APP_API_URL: ${STAFF_API_URL:-http://localhost:8089}
     container_name: classroom_staff_ui
-    expose:
-      - "80"
     ports:
       - "8091:80"
     networks:
