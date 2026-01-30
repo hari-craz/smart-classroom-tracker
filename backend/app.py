@@ -381,6 +381,7 @@ def esp_status_report():
         
         # Update room status
         classroom = device.classroom
+        commands = {}
         if classroom:
             room_status = classroom.room_status
             if not room_status:

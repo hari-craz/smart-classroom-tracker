@@ -1,0 +1,7 @@
+{
+  "include": ["backend", "frontend-admin/src", "frontend-staff/src"],
+  "exclude": ["node_modules", "__pycache__", ".venv", "venv"],
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false,
+  "pythonVersion": "3.11"
+}
