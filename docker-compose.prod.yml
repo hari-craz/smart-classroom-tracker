@@ -40,6 +40,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    expose:
+      - "5000"
     ports:
       - "8089:5000"
     networks:
@@ -54,6 +56,8 @@ services:
       args:
         REACT_APP_API_URL: ${ADMIN_API_URL:-http://localhost:8089}
     container_name: classroom_admin_ui
+    expose:
+      - "80"
     ports:
       - "8090:80"
     networks:
@@ -68,6 +72,8 @@ services:
       args:
         REACT_APP_API_URL: ${STAFF_API_URL:-http://localhost:8089}
     container_name: classroom_staff_ui
+    expose:
+      - "80"
     ports:
       - "8091:80"
     networks:
