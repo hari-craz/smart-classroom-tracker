@@ -1,7 +1,7 @@
 version: '3.8'
 
-# Production Docker Compose for Portainer/TrueNAS
-# Deploy as a Stack in Portainer
+# Docker Compose for Smart Classroom Tracker
+# Works with: docker-compose up -d --build
 
 services:
   # PostgreSQL Database
@@ -16,8 +16,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./database/init-users.sql:/docker-entrypoint-initdb.d/02-init-users.sql
-    expose:
-      - "5432"
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U classroom"]
       interval: 10s
@@ -29,7 +29,9 @@ services:
 
   # Backend API Server
   backend:
-    image: smartclassroomutilizationtrackerwithpowermanagement-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
     container_name: classroom_api
     environment:
       DATABASE_URL: postgresql://classroom:${DB_PASSWORD:-classroom_secure_password}@db:5432/classroom_tracker
@@ -46,10 +48,12 @@ services:
 
   # Admin Frontend
   admin-frontend:
-    image: smartclassroomutilizationtrackerwithpowermanagement-admin-frontend:latest
+    build:
+      context: ./frontend-admin
+      dockerfile: Dockerfile.prod
+      args:
+        REACT_APP_API_URL: ${ADMIN_API_URL:-http://localhost:8089}
     container_name: classroom_admin_ui
-    environment:
-      REACT_APP_API_URL: ${ADMIN_API_URL:-http://localhost:8089}
     ports:
       - "8090:80"
     networks:
@@ -58,10 +62,12 @@ services:
 
   # Staff Frontend
   staff-frontend:
-    image: smartclassroomutilizationtrackerwithpowermanagement-staff-frontend:latest
+    build:
+      context: ./frontend-staff
+      dockerfile: Dockerfile.prod
+      args:
+        REACT_APP_API_URL: ${STAFF_API_URL:-http://localhost:8089}
     container_name: classroom_staff_ui
-    environment:
-      REACT_APP_API_URL: ${STAFF_API_URL:-http://localhost:8089}
     ports:
       - "8091:80"
     networks:
