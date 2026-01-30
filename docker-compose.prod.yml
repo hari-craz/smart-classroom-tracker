@@ -1,0 +1,82 @@
+version: '3.8'
+
+# Production Docker Compose for Portainer/TrueNAS
+# Deploy as a Stack in Portainer
+
+services:
+  # PostgreSQL Database
+  db:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: classroom_db
+    environment:
+      POSTGRES_USER: classroom
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-classroom_secure_password}
+      POSTGRES_DB: classroom_tracker
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U classroom"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - classroom_network
+    restart: unless-stopped
+
+  # Backend API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: classroom_api
+    environment:
+      DATABASE_URL: postgresql://classroom:${DB_PASSWORD:-classroom_secure_password}@db:5432/classroom_tracker
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-your_super_secret_jwt_key_change_this}
+      FLASK_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8089:5000"
+    networks:
+      - classroom_network
+    restart: unless-stopped
+
+  # Admin Frontend
+  admin-frontend:
+    build:
+      context: ./frontend-admin
+      dockerfile: Dockerfile.prod
+      args:
+        REACT_APP_API_URL: ${ADMIN_API_URL:-http://localhost:8089}
+    container_name: classroom_admin_ui
+    ports:
+      - "8090:80"
+    networks:
+      - classroom_network
+    restart: unless-stopped
+
+  # Staff Frontend
+  staff-frontend:
+    build:
+      context: ./frontend-staff
+      dockerfile: Dockerfile.prod
+      args:
+        REACT_APP_API_URL: ${STAFF_API_URL:-http://localhost:8089}
+    container_name: classroom_staff_ui
+    ports:
+      - "8091:80"
+    networks:
+      - classroom_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  classroom_network:
+    driver: bridge

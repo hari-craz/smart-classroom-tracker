@@ -1,0 +1,5 @@
+FROM postgres:15-alpine
+
+# Copy init SQL
+COPY schema.sql /docker-entrypoint-initdb.d/01-schema.sql
+COPY init-users.sql /docker-entrypoint-initdb.d/02-init-users.sql
