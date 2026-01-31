@@ -3,8 +3,6 @@
 -- Default staff password: pass123
 
 INSERT INTO users (username, email, password_hash, role, is_active) VALUES
-('admin', 'admin@classroom.local', 'scrypt:32768:8:1$WfXJl8Vy7IkJHxvN$5e3b6f4c8a9d2e1f0b3c4a5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4', 'admin', true),
-('staff', 'staff@classroom.local', 'scrypt:32768:8:1$AbCdEfGh1234567$1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4', 'staff', true);
-
--- Note: These are placeholder hashes. The application will create proper hashes on first run.
--- You can register new users through the admin panel or API.
+('admin', 'admin@classroom.local', 'scrypt:32768:8:1$V2LhS488Nxx5Tik5$ce6e905d1d081233ea8a0f99b4aa86514e68ed8c953fa15bfc719b89dc6be9e39b251ffdef9a21476b86771ddb388f750e7036241c09ead36a329391ee9e92e2', 'admin', true),
+('staff', 'staff@classroom.local', 'scrypt:32768:8:1$qDjTogwOFWhxsT1f$87575604872e7a0aae5728f006208feec53c847125cf71054e992be78b2f5772b6b91336dcc2028cf70ab358e120f1c103ec6fe652c9470ada38aa805f40fe1b', 'staff', true)
+ON CONFLICT (username) DO NOTHING;
