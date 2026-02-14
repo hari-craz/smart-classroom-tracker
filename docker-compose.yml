@@ -19,7 +19,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U classroom -d classroom_tracker"]
+      test: [ "CMD-SHELL", "pg_isready -U classroom -d classroom_tracker" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -55,7 +55,7 @@ services:
         REACT_APP_API_URL: ${ADMIN_API_URL:-http://localhost:8089}
     container_name: classroom_admin_ui
     ports:
-      - "8090:80"
+      - "8092:80"
     networks:
       - classroom_network
     restart: unless-stopped
@@ -76,6 +76,7 @@ services:
 
 volumes:
   postgres_data:
+
 
 networks:
   classroom_network:

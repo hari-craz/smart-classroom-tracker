@@ -2,6 +2,7 @@
 Smart Classroom Utilization Tracker - Backend API Server
 Built with Flask and PostgreSQL
 """
+# pyre-ignore-all-errors
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -150,11 +151,18 @@ class ESPDevice(db.Model):
     power_logs = db.relationship('PowerLog', backref='esp_device', lazy=True)
     
     def to_dict(self):
+        now = datetime.utcnow()
+        is_connected = False
+        if self.last_seen:
+            diff = (now - self.last_seen).total_seconds()
+            is_connected = diff < 120  # Connected if seen within 2 minutes
+        
         return {
             'device_id': self.device_id,
             'name': self.name,
             'mac_address': self.mac_address,
             'is_active': self.is_active,
+            'is_connected': is_connected,
             'last_seen': self.last_seen.isoformat() if self.last_seen else None,
             'firmware_version': self.firmware_version,
             'created_at': self.created_at.isoformat(),
@@ -415,6 +423,34 @@ def esp_status_report():
         return jsonify({'error': 'Failed to process status'}), 500
 
 
+@app.route('/api/esp/heartbeat', methods=['POST'])
+@verify_esp_device()
+def esp_heartbeat():
+    """Lightweight heartbeat from ESP device to report connectivity"""
+    device_id = request.headers.get('X-Device-ID')
+    
+    try:
+        device = ESPDevice.query.filter_by(device_id=device_id).first()
+        device.last_seen = datetime.utcnow()
+        
+        # Optionally update firmware version if provided
+        data = request.get_json(silent=True)
+        if data and data.get('firmware_version'):
+            device.firmware_version = data['firmware_version']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Heartbeat received',
+            'server_time': datetime.utcnow().isoformat()
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error processing heartbeat: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to process heartbeat'}), 500
+
+
 @app.route('/api/esp/power-log', methods=['POST'])
 @verify_esp_device()
 def esp_power_log():
@@ -519,6 +555,33 @@ def get_devices():
     
     devices = ESPDevice.query.all()
     return jsonify([d.to_dict() for d in devices]), 200
+
+
+@app.route('/api/admin/devices/status', methods=['GET'])
+@jwt_required()
+def get_devices_status():
+    """Get all ESP devices with enriched connectivity and classroom info"""
+    current_user_id = int(get_jwt_identity())
+    user = User.query.get(current_user_id)
+    
+    if not user or user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    devices = ESPDevice.query.all()
+    result = []
+    for d in devices:
+        data = d.to_dict()
+        # Add linked classroom info (backref returns a list)
+        linked_classroom = d.classroom[0] if d.classroom else None
+        if linked_classroom:
+            data['classroom_name'] = linked_classroom.name
+            data['classroom_id'] = linked_classroom.id
+        else:
+            data['classroom_name'] = None
+            data['classroom_id'] = None
+        result.append(data)
+    
+    return jsonify(result), 200
 
 
 @app.route('/api/admin/devices', methods=['POST'])

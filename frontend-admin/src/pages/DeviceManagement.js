@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/Management.css';
 import API_URL from '../config';
 
@@ -14,30 +14,34 @@ function DeviceManagement({ token }) {
     mac_address: '',
   });
 
-  useEffect(() => {
-    const fetchDevices = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/admin/devices`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+  const fetchDevices = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/devices/status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch devices');
-        }
-
-        const data = await response.json();
-        setDevices(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to fetch devices');
       }
-    };
 
-    fetchDevices();
+      const data = await response.json();
+      setDevices(data);
+      setError('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
+
+  useEffect(() => {
+    fetchDevices();
+    // Auto-refresh every 15 seconds to keep connection status current
+    const interval = setInterval(fetchDevices, 15000);
+    return () => clearInterval(interval);
+  }, [fetchDevices]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,16 +74,66 @@ function DeviceManagement({ token }) {
     setFormData({ ...formData, api_key: key });
   };
 
+  const getTimeSince = (isoDate) => {
+    if (!isoDate) return 'Never';
+    const now = new Date();
+    const then = new Date(isoDate);
+    const diffMs = now - then;
+    const diffSec = Math.floor(diffMs / 1000);
+
+    if (diffSec < 60) return `${diffSec}s ago`;
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+    return `${Math.floor(diffSec / 86400)}d ago`;
+  };
+
+  const connectedCount = devices.filter(d => d.is_connected).length;
+  const disconnectedCount = devices.filter(d => !d.is_connected).length;
+
   if (loading) return <div className="loading">Loading devices...</div>;
 
   return (
     <div className="management-container">
-      <h2>Device Management</h2>
+      <div className="page-header">
+        <h2>Device Management</h2>
+        <p>Monitor and manage your ESP32 devices</p>
+      </div>
 
-      {error && <div className="error-alert">{error}</div>}
+      {error && <div className="error-alert">⚠️ {error}</div>}
+
+      {/* Connection Status Summary */}
+      <div className="device-status-summary">
+        <div className="status-card connected">
+          <div className="status-indicator">
+            <span className="pulse-dot online"></span>
+          </div>
+          <div className="status-info">
+            <h3>{connectedCount}</h3>
+            <p>Connected</p>
+          </div>
+        </div>
+        <div className="status-card disconnected">
+          <div className="status-indicator">
+            <span className="pulse-dot offline"></span>
+          </div>
+          <div className="status-info">
+            <h3>{disconnectedCount}</h3>
+            <p>Disconnected</p>
+          </div>
+        </div>
+        <div className="status-card total">
+          <div className="status-indicator">
+            <span className="device-icon">📡</span>
+          </div>
+          <div className="status-info">
+            <h3>{devices.length}</h3>
+            <p>Total Devices</p>
+          </div>
+        </div>
+      </div>
 
       <button className="add-btn" onClick={() => setShowForm(!showForm)}>
-        {showForm ? 'Cancel' : '+ Register Device'}
+        {showForm ? '✕ Cancel' : '+ Register Device'}
       </button>
 
       {showForm && (
@@ -138,31 +192,47 @@ function DeviceManagement({ token }) {
       <table className="management-table">
         <thead>
           <tr>
+            <th>Connection</th>
             <th>Device ID</th>
             <th>Name</th>
+            <th>Linked Classroom</th>
             <th>MAC Address</th>
-            <th>Status</th>
             <th>Last Seen</th>
             <th>Firmware</th>
           </tr>
         </thead>
         <tbody>
           {devices.map(device => (
-            <tr key={device.device_id}>
+            <tr key={device.device_id} className={device.is_connected ? 'row-connected' : 'row-disconnected'}>
+              <td>
+                <div className="connection-status">
+                  <span className={`pulse-dot ${device.is_connected ? 'online' : 'offline'}`}></span>
+                  <span className={`connection-label ${device.is_connected ? 'online' : 'offline'}`}>
+                    {device.is_connected ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              </td>
               <td><code>{device.device_id}</code></td>
               <td>{device.name}</td>
-              <td>{device.mac_address || '-'}</td>
+              <td>{device.classroom_name || <span style={{ color: 'var(--text-muted)' }}>Not linked</span>}</td>
+              <td>{device.mac_address || '—'}</td>
               <td>
-                <span className={`badge ${device.is_active ? 'active' : 'inactive'}`}>
-                  {device.is_active ? 'Active' : 'Inactive'}
+                <span className={device.is_connected ? '' : 'last-seen-warning'}>
+                  {getTimeSince(device.last_seen)}
                 </span>
               </td>
-              <td>{device.last_seen ? new Date(device.last_seen).toLocaleString() : 'Never'}</td>
-              <td>{device.firmware_version || '-'}</td>
+              <td>{device.firmware_version || '—'}</td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {devices.length === 0 && (
+        <div className="empty-state">
+          <p>📡 No devices registered yet.</p>
+          <p>Register your first ESP32 device to start monitoring.</p>
+        </div>
+      )}
     </div>
   );
 }

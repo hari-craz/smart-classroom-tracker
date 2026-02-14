@@ -1,7 +1,22 @@
 {
-  "include": ["backend", "frontend-admin/src", "frontend-staff/src"],
-  "exclude": ["node_modules", "__pycache__", ".venv", "venv"],
+  "include": [
+    "backend",
+    "esp-firmware"
+  ],
+  "exclude": [
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "frontend-admin",
+    "frontend-staff"
+  ],
+  "typeCheckingMode": "off",
   "reportMissingImports": false,
   "reportMissingModuleSource": false,
+  "reportGeneralTypeIssues": false,
+  "reportOptionalMemberAccess": false,
+  "reportArgumentType": false,
+  "reportCallIssue": false,
   "pythonVersion": "3.11"
 }

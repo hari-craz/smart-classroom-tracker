@@ -38,9 +38,12 @@ function Login({ onLogin }) {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h1>Smart Classroom Portal</h1>
-        <p className="subtitle">Staff Login</p>
-        
+        <div className="brand-badge">
+          <div className="icon">🎓</div>
+        </div>
+        <h1>Smart Classroom</h1>
+        <p className="subtitle">Staff Portal · Sign In</p>
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Username</label>
@@ -69,7 +72,7 @@ function Login({ onLogin }) {
           {error && <div className="error-message">{error}</div>}
 
           <button type="submit" disabled={loading} className="login-btn">
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? '⏳ Authenticating...' : '🔐 Sign In'}
           </button>
         </form>
       </div>

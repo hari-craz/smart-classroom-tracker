@@ -27,8 +27,7 @@ function Login({ onLogin }) {
       }
 
       const data = await response.json();
-      
-      // Verify admin role
+
       if (data.user.role !== 'admin') {
         setError('Admin access required');
         return;
@@ -45,8 +44,14 @@ function Login({ onLogin }) {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h1>Smart Classroom Admin Login</h1>
-        
+        <div className="brand-badge">
+          <div className="icon">🎓</div>
+        </div>
+        <h1>Welcome Back</h1>
+        <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.9rem' }}>
+          Sign in to your admin dashboard
+        </p>
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Username</label>
@@ -56,6 +61,7 @@ function Login({ onLogin }) {
               onChange={(e) => setUsername(e.target.value)}
               required
               disabled={loading}
+              placeholder="Enter your username"
             />
           </div>
 
@@ -67,20 +73,20 @@ function Login({ onLogin }) {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
+              placeholder="Enter your password"
             />
           </div>
 
           {error && <div className="error-message">{error}</div>}
 
           <button type="submit" disabled={loading} className="login-btn">
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? '⏳ Authenticating...' : '🔐 Sign In'}
           </button>
         </form>
 
         <div className="login-info">
-          <p>Default Admin Account:</p>
-          <p>Username: admin</p>
-          <p>Password: admin123</p>
+          <p>Default Admin Account</p>
+          <p>Username: <code>admin</code> · Password: <code>admin123</code></p>
         </div>
       </div>
     </div>
