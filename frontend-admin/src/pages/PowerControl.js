@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/PowerControl.css';
 import API_URL from '../config';
 
-function PowerControl({ token }) {
+function PowerControl({ token, onAuthError }) {
   const [classrooms, setClassrooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -16,6 +16,10 @@ function PowerControl({ token }) {
           headers: { 'Authorization': `Bearer ${token}` },
         });
 
+        if (response.status === 401) {
+          onAuthError && onAuthError();
+          return;
+        }
         if (!response.ok) {
           throw new Error('Failed to fetch classrooms');
         }
@@ -35,7 +39,7 @@ function PowerControl({ token }) {
   const handlePowerControl = async (classroomId, powerOn) => {
     try {
       const response = await fetch(
-        `/api/admin/power/${classroomId}`,
+        `${API_URL}/api/admin/power/${classroomId}`,
         {
           method: 'POST',
           headers: {

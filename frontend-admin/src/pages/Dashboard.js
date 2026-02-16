@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/Dashboard.css';
 import API_URL from '../config';
 
-function Dashboard({ token }) {
+function Dashboard({ token, onAuthError }) {
   const [classrooms, setClassrooms] = useState([]);
   const [stats, setStats] = useState({
     totalClassrooms: 0,
@@ -26,6 +26,10 @@ function Dashboard({ token }) {
           }),
         ]);
 
+        if (classroomRes.status === 401 || deviceRes.status === 401) {
+          onAuthError && onAuthError();
+          return;
+        }
         if (!classroomRes.ok) throw new Error('Failed to fetch classrooms');
 
         const classroomData = await classroomRes.json();

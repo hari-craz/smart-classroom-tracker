@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/Management.css';
 import API_URL from '../config';
 
-function DeviceManagement({ token }) {
+function DeviceManagement({ token, onAuthError }) {
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -22,6 +22,10 @@ function DeviceManagement({ token }) {
         },
       });
 
+      if (response.status === 401) {
+        onAuthError && onAuthError();
+        return;
+      }
       if (!response.ok) {
         throw new Error('Failed to fetch devices');
       }
@@ -64,6 +68,29 @@ function DeviceManagement({ token }) {
       setDevices([...devices, newDevice]);
       setFormData({ device_id: '', name: '', api_key: '', mac_address: '' });
       setShowForm(false);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDelete = async (deviceId) => {
+    if (!window.confirm(`Are you sure you want to delete device ${deviceId}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/devices/${deviceId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete device');
+      }
+
+      setDevices(devices.filter(d => d.device_id !== deviceId));
     } catch (err) {
       setError(err.message);
     }
@@ -199,6 +226,7 @@ function DeviceManagement({ token }) {
             <th>MAC Address</th>
             <th>Last Seen</th>
             <th>Firmware</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -222,6 +250,15 @@ function DeviceManagement({ token }) {
                 </span>
               </td>
               <td>{device.firmware_version || '—'}</td>
+              <td>
+                <button
+                  className="action-btn delete-btn"
+                  onClick={() => handleDelete(device.device_id)}
+                  title="Delete Device"
+                >
+                  🗑️
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

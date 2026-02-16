@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/Management.css';
 import API_URL from '../config';
 
-function UserManagement({ token }) {
+function UserManagement({ token, onAuthError }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,6 +26,10 @@ function UserManagement({ token }) {
 
         console.log('Response status:', response.status);
         
+        if (response.status === 401) {
+          onAuthError && onAuthError();
+          return;
+        }
         if (!response.ok) {
           const errorText = await response.text();
           console.error('Error response:', errorText);

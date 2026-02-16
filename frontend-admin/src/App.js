@@ -18,11 +18,30 @@ function App() {
     const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
+      // Check if token is expired by decoding JWT payload
+      try {
+        const payload = JSON.parse(atob(storedToken.split('.')[1]));
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+          // Token expired — clear storage
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          return;
+        }
+      } catch (e) {
+        // If token can't be decoded, clear it
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        return;
+      }
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
       setIsAuthenticated(true);
     }
   }, []);
+
+  const handleAuthError = () => {
+    handleLogout();
+  };
 
   const handleLogin = (userToken, userData) => {
     setToken(userToken);
@@ -56,17 +75,17 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <Dashboard token={token} />;
+        return <Dashboard token={token} onAuthError={handleAuthError} />;
       case 'users':
-        return <UserManagement token={token} />;
+        return <UserManagement token={token} onAuthError={handleAuthError} />;
       case 'devices':
-        return <DeviceManagement token={token} />;
+        return <DeviceManagement token={token} onAuthError={handleAuthError} />;
       case 'classrooms':
-        return <ClassroomManagement token={token} />;
+        return <ClassroomManagement token={token} onAuthError={handleAuthError} />;
       case 'power':
-        return <PowerControl token={token} />;
+        return <PowerControl token={token} onAuthError={handleAuthError} />;
       default:
-        return <Dashboard token={token} />;
+        return <Dashboard token={token} onAuthError={handleAuthError} />;
     }
   };
 

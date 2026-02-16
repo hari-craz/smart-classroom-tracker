@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/Management.css';
 import API_URL from '../config';
 
-function ClassroomManagement({ token }) {
+function ClassroomManagement({ token, onAuthError }) {
   const [classrooms, setClassrooms] = useState([]);
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +27,10 @@ function ClassroomManagement({ token }) {
           }),
         ]);
 
+        if (classroomsRes.status === 401 || devicesRes.status === 401) {
+          onAuthError && onAuthError();
+          return;
+        }
         if (!classroomsRes.ok || !devicesRes.ok) {
           throw new Error('Failed to fetch data');
         }

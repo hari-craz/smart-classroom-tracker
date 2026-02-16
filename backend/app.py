@@ -609,6 +609,36 @@ def create_device():
     return jsonify(device.to_dict()), 201
 
 
+@app.route('/api/admin/devices/<device_id>', methods=['DELETE'])
+@jwt_required()
+def delete_device(device_id):
+    """Delete an ESP device"""
+    current_user_id = int(get_jwt_identity())
+    user = User.query.get(current_user_id)
+    
+    if not user or user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    device = ESPDevice.query.filter_by(device_id=device_id).first()
+    
+    if not device:
+        return jsonify({'error': 'Device not found'}), 404
+        
+    # Delete associated logs first to avoid FK constraints
+    StatusLog.query.filter_by(device_id=device_id).delete()
+    PowerLog.query.filter_by(device_id=device_id).delete()
+    
+    # Unlink from classrooms
+    classrooms = Classroom.query.filter_by(esp_device_id=device_id).all()
+    for c in classrooms:
+        c.esp_device_id = None
+    
+    db.session.delete(device)
+    db.session.commit()
+    
+    return jsonify({'message': 'Device deleted successfully'}), 200
+
+
 # ============================================================================
 # ADMIN ROUTES - CLASSROOM MANAGEMENT
 # ============================================================================

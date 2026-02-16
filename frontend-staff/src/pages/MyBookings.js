@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/MyBookings.css';
 import API_URL from '../config';
 
-function MyBookings({ token }) {
+function MyBookings({ token, onAuthError }) {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -16,6 +16,10 @@ function MyBookings({ token }) {
           },
         });
 
+        if (response.status === 401) {
+          onAuthError && onAuthError();
+          return;
+        }
         if (!response.ok) {
           throw new Error('Failed to fetch bookings');
         }

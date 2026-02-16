@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/Booking.css';
 import API_URL from '../config';
 
-function BookingPortal({ token }) {
+function BookingPortal({ token, onAuthError }) {
   const [classrooms, setClassrooms] = useState([]);
   const [selectedClassroom, setSelectedClassroom] = useState(null);
   const [bookingForm, setBookingForm] = useState({
@@ -24,6 +24,10 @@ function BookingPortal({ token }) {
           },
         });
 
+        if (response.status === 401) {
+          onAuthError && onAuthError();
+          return;
+        }
         if (!response.ok) {
           throw new Error('Failed to fetch classrooms');
         }

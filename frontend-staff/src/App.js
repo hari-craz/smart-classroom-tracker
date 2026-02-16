@@ -17,11 +17,30 @@ function App() {
     const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
+      // Check if token is expired by decoding JWT payload
+      try {
+        const payload = JSON.parse(atob(storedToken.split('.')[1]));
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+          // Token expired — clear storage
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          return;
+        }
+      } catch (e) {
+        // If token can't be decoded, clear it
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        return;
+      }
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
       setIsAuthenticated(true);
     }
   }, []);
+
+  const handleAuthError = () => {
+    handleLogout();
+  };
 
   const handleLogin = (userToken, userData) => {
     setToken(userToken);
@@ -54,15 +73,15 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <StaffDashboard token={token} />;
+        return <StaffDashboard token={token} onAuthError={handleAuthError} />;
       case 'book':
-        return <BookingPortal token={token} />;
+        return <BookingPortal token={token} onAuthError={handleAuthError} />;
       case 'my-bookings':
-        return <MyBookings token={token} />;
+        return <MyBookings token={token} onAuthError={handleAuthError} />;
       case 'contact':
         return <ContactUs />;
       default:
-        return <StaffDashboard token={token} />;
+        return <StaffDashboard token={token} onAuthError={handleAuthError} />;
     }
   };
 
