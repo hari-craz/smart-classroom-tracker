@@ -1,3 +1,5 @@
+
+
 /*
  * Smart Classroom Utilization Tracker - ESP32/ESP8266 Firmware
  *
@@ -23,12 +25,12 @@
 // CONFIGURATION - MODIFY THESE FOR YOUR SETUP
 // ============================================================================
 
-const char *WIFI_SSID = "Nothing 3a Pro";
+const char *WIFI_SSID = "Nothing 3a Pro ";
 const char *WIFI_PASSWORD = "hari1234";
 
-const char *SERVER_URL = "http://10.207.228.150:5000"; // Central server IP
+const char *SERVER_URL = "http://10.207.228.46:5000"; // Central server IP
 const char *DEVICE_ID = "CLASSROOM_001";
-const char *API_KEY = "key_yguowyaj6q";
+const char *API_KEY = "key_pdtdxyal4g";
 
 // Timing Configuration (in seconds)
 const int MOVEMENT_TIMEOUT = 60;      // 1 minute - consider idle after this
@@ -122,7 +124,8 @@ void loop() {
   unsigned long idleTime = (currentTime - lastMovementTime) / 1000;
   bool currentlyIdle = (idleTime >= MOVEMENT_TIMEOUT);
 
-  if (currentlyIdle != isRoomOccupied) {
+  if (currentlyIdle == isRoomOccupied) { // If idle state matches occupied
+                                         // state, it means we need to flip
     isRoomOccupied = !currentlyIdle;
     Serial.print("Room status changed: ");
     Serial.println(isRoomOccupied ? "OCCUPIED" : "IDLE");
@@ -188,26 +191,71 @@ float getUltrasonicDistance() {
 // ============================================================================
 
 void connectToWiFi() {
-  Serial.print("Connecting to WiFi: ");
+  Serial.println("\n--- WiFi Debugging Start ---");
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(100);
+
+  Serial.println("Scanning for networks...");
+  int n = WiFi.scanNetworks();
+  Serial.println("Scan done");
+
+  bool ssidFound = false;
+  if (n == 0) {
+    Serial.println("No networks found");
+  } else {
+    Serial.print(n);
+    Serial.println(" networks found");
+    for (int i = 0; i < n; ++i) {
+      Serial.print(i + 1);
+      Serial.print(": ");
+      Serial.print(WiFi.SSID(i));
+      Serial.print(" (");
+      Serial.print(WiFi.RSSI(i));
+      Serial.print(")");
+      if (WiFi.SSID(i) == String(WIFI_SSID)) {
+        ssidFound = true;
+        Serial.print(" <<< TARGET FOUND");
+      }
+      Serial.println();
+      delay(10);
+    }
+  }
+
+  if (!ssidFound) {
+    Serial.println("\nWARNING: Target SSID '" + String(WIFI_SSID) +
+                   "' not found in scan!");
+    Serial.println("Possible causes:");
+    Serial.println("1. Hotspot is 5GHz only (ESP32 needs 2.4GHz)");
+    Serial.println("2. Hotspot is hidden");
+    Serial.println("3. Distance is too far");
+  }
+
+  Serial.print("\nConnecting to: ");
   Serial.println(WIFI_SSID);
 
-  WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+  while (WiFi.status() != WL_CONNECTED && attempts < 30) {
     delay(500);
     Serial.print(".");
+    if (attempts % 10 == 0)
+      Serial.print(WiFi.status()); // Print status code occasionally
     attempts++;
   }
 
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println();
-    Serial.print("WiFi connected! IP: ");
+    Serial.println("\nWiFi connected!");
+    Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
   } else {
-    Serial.println("\nFailed to connect to WiFi");
+    Serial.print("\nFailed to connect. Status: ");
+    Serial.println(WiFi.status());
+    Serial.println("(Status codes: 255=No Shield, 1=No SSID, 4=Connect Failed, "
+                   "6=Disconnected)");
   }
+  Serial.println("--- WiFi Debugging End ---\n");
 }
 
 void reportStatusToServer() {
